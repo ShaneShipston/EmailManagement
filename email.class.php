@@ -11,6 +11,8 @@ class Email
 	private $bcc = array();
 	private $subject;
 	private $message;
+	private $raw_message;
+	private $alt_message;
 	private $from;
 	private $reply;
 	private $libr = "\r\n";
@@ -101,7 +103,7 @@ class Email
 	/**
 	 * Set Reply
 	 *
-	 * @since 1.0.0
+	 * @since 1.0.1
 	 * 
 	 * @param string $email From Email
 	 * @param string $name Sender Name
@@ -149,7 +151,21 @@ class Email
 		
 		$message = $this->strip_line_breaks($message);
 		
-		$this->message = $this->mail_body($message);
+		$this->raw_message = $message;
+		
+		return $this;
+	}
+
+	/**
+	 * Set Alternate Body for Non HTML clients
+	 *
+	 * @since 1.0.1
+	 * 
+	 * @param string $message Body
+	 */
+	public function set_alt_body($message) 
+	{
+		$this->alt_message = $message;
 		
 		return $this;
 	}
@@ -197,12 +213,12 @@ class Email
 		$file_type = $this->mime_type($filepath);
 		$chunks = chunk_split(base64_encode($file_info));
 		
-		$mail_part = '--'.$this->uid.$this->libr;
-		$mail_part .= 'Content-type:'.$file_type.'; name="'.$filename.'"'.$this->libr;
-		$mail_part .= 'Content-Transfer-Encoding: base64'.$this->libr;
-		$mail_part .= 'Content-Disposition: '.$disposition.';'.$this->libr.$this->libr;
+		$mail_part = '--' . $this->uid . $this->libr;
+		$mail_part .= 'Content-type:' . $file_type . '; name="' . $filename . '"' . $this->libr;
+		$mail_part .= 'Content-Transfer-Encoding: base64' . $this->libr;
+		$mail_part .= 'Content-Disposition: ' . $disposition . ';' . $this->libr . $this->libr;
 		$mail_part .= $chunks;
-		$mail_part .= $this->libr.$this->libr;
+		$mail_part .= $this->libr . $this->libr;
 		
 		$this->attachments[] = $mail_part;
 		
@@ -241,6 +257,8 @@ class Email
 		
 		$headers .= "MIME-Version: 1.0" . $this->libr;
 		$headers .= "X-Priority: ".$this->priority . $this->libr;
+
+		$this->message = $this->mail_body($this->raw_message);
 		
 		if(!empty($this->attachments)) // With Attachment
 		{ 
@@ -337,14 +355,18 @@ class Email
 	 */
 	private function mail_body($message) 
 	{
-		$mail_body = '--mail_'.$this->uid.''.$this->libr;
+		$mail_body = '--mail_' . $this->uid . '' . $this->libr;
 		
 		// Ensure plain text email clients can still read the email
-		$mail_body .= 'Content-Type: text/plain; charset="'.$this->charset.'" '.$this->libr;
-		$mail_body .= 'Content-Transfer-Encoding: 7bit'.$this->libr.$this->libr;
-		$mail_body .= strip_tags(trim($message)).$this->libr.$this->libr;
+		$mail_body .= 'Content-Type: text/plain; charset="'.$this->charset.'" ' . $this->libr;
+		$mail_body .= 'Content-Transfer-Encoding: 7bit' . $this->libr . $this->libr;
 		
-		$mail_body .= '--mail_'.$this->uid.''.$this->libr;
+		if(!empty($this->alt_message)) 
+			$mail_body .= strip_tags(trim($this->alt_message)) . $this->libr . $this->libr;
+		else 
+			$mail_body .= strip_tags(trim($message)) . $this->libr . $this->libr;
+		
+		$mail_body .= '--mail_' . $this->uid . '' . $this->libr;
 		
 		if($this->type == 'text/plain') 
 		{
@@ -352,11 +374,11 @@ class Email
 			return $mail_body;
 		}
 		
-		$mail_body .= 'Content-Type: text/html; charset="'.$this->charset.'"'.$this->libr;
-		$mail_body .= 'Content-Transfer-Encoding: 7bit'.$this->libr.$this->libr;
-		$mail_body .= trim($message).$this->libr.$this->libr;
+		$mail_body .= 'Content-Type: text/html; charset="' . $this->charset . '"' . $this->libr;
+		$mail_body .= 'Content-Transfer-Encoding: 7bit' . $this->libr . $this->libr;
+		$mail_body .= trim($message) . $this->libr . $this->libr;
 		
-		$mail_body .= '--mail_'.$this->uid.'--'.$this->libr.$this->libr;
+		$mail_body .= '--mail_' . $this->uid . '--' . $this->libr . $this->libr;
 		
 		return $mail_body;
 	}
@@ -478,7 +500,7 @@ class Email
 	/**
 	 * Grab servers domain name
 	 *
-	 * @since 1.0.0
+	 * @since 1.0.1
 	 * @access private
 	 * 
 	 * @return string Formatted Content
