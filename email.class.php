@@ -231,6 +231,10 @@ class Email
 			else 
 				$headers .= "Reply-To: " . $this->from . $this->libr;
 		}
+		else 
+		{
+			$headers .= "From: noreply@" . $this->domain_name() . $this->libr;
+		}
 
 		if(!empty($this->cc)) $headers .= "Cc: ".implode(", ", $this->cc) . $this->libr;
 		if(!empty($this->bcc)) $headers .= "Bcc: ".implode(", ", $this->bcc) . $this->libr;
@@ -469,5 +473,23 @@ class Email
 	private function strip_line_breaks($message) 
 	{
 		return preg_replace("/([\r\n])/", "", $message);
+	}
+
+	/**
+	 * Grab servers domain name
+	 *
+	 * @since 1.0.0
+	 * @access private
+	 * 
+	 * @return string Formatted Content
+	 */
+	private function domain_name()
+	{
+		if(strpos($_SERVER['HTTP_HOST'], ':') !== false) 
+			$host = substr($_SERVER['HTTP_HOST'], 0, strpos($_SERVER['HTTP_HOST'], ':'));
+		else 
+			$host = $_SERVER['HTTP_HOST'];
+		
+		return $host;
 	}
 }
