@@ -12,6 +12,7 @@ class Email
 	private $subject;
 	private $message;
 	private $from;
+	private $reply;
 	private $libr = "\r\n";
 	private $priority = 3;
 	private $type = 'text/html';
@@ -89,9 +90,30 @@ class Email
 		if($this->validate_email($email) && $this->dns_check($email)) 
 		{
 			if(!empty($name)) 
-				$this->from = ucwords($name).' <'.$email.'>';
+				$this->from = ucwords($name) . ' <' . $email . '>';
 			else 
 				$this->from = $email;
+		}
+		
+		return $this;
+	}
+
+	/**
+	 * Set Reply
+	 *
+	 * @since 1.0.0
+	 * 
+	 * @param string $email From Email
+	 * @param string $name Sender Name
+	 */
+	public function set_reply($email, $name = '') 
+	{
+		if($this->validate_email($email) && $this->dns_check($email)) 
+		{
+			if(!empty($name)) 
+				$this->reply = ucwords($name) . ' <' . $email . '>';
+			else 
+				$this->reply = $email;
 		}
 		
 		return $this;
@@ -202,8 +224,12 @@ class Email
 		
 		if(!empty($this->from)) 
 		{
-			$headers .= "From: ".$this->from.$this->libr;
-			$headers .= "Reply-To: ".$this->from.$this->libr;
+			$headers .= "From: " . $this->from . $this->libr;
+			
+			if(!empty($this->reply)) 
+				$headers .= "Reply-To: " . $this->reply . $this->libr;
+			else 
+				$headers .= "Reply-To: " . $this->from . $this->libr;
 		}
 
 		if(!empty($this->cc)) $headers .= "Cc: ".implode(", ", $this->cc) . $this->libr;
