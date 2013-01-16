@@ -4,7 +4,8 @@
  * 
  * @version 1.0.0
  */
-class Email {
+class Email 
+{
 	private $recipients = array();
 	private $cc = array();
 	private $bcc = array();
@@ -24,7 +25,8 @@ class Email {
 	 *
 	 * @since 1.0.0
 	 */
-	public function __construct() {
+	public function __construct() 
+	{
 		$this->create_mime_boundry();
 	}
 	
@@ -36,7 +38,8 @@ class Email {
 	 * @param string $email Email Address
 	 * @param string $name Recipient Name
 	 */
-	public function add_recipient($email, $name = '') {
+	public function add_recipient($email, $name = '') 
+	{
 		$this->new_email($email, $name);
 		
 		return $this;
@@ -50,7 +53,8 @@ class Email {
 	 * @param string $email Email Address
 	 * @param string $name Recipient Name
 	 */
-	public function add_cc($email, $name = '') {
+	public function add_cc($email, $name = '') 
+	{
 		$this->new_email($email, $name, 'cc');
 		
 		return $this;
@@ -64,7 +68,8 @@ class Email {
 	 * @param string $email Email Address
 	 * @param string $name Recipient Name
 	 */
-	public function add_bcc($email, $name = '') {
+	public function add_bcc($email, $name = '') 
+	{
 		$this->new_email($email, $name, 'bcc');
 		
 		return $this;
@@ -78,10 +83,14 @@ class Email {
 	 * @param string $email From Email
 	 * @param string $name Sender Name
 	 */
-	public function set_from($email, $name = '') {
-		if($this->validate_email($email) && $this->dns_check($email)) {
-			if(!empty($name)) $this->from = ucwords($name).' <'.$email.'>';
-			else $this->from = $email;
+	public function set_from($email, $name = '') 
+	{
+		if($this->validate_email($email) && $this->dns_check($email)) 
+		{
+			if(!empty($name)) 
+				$this->from = ucwords($name).' <'.$email.'>';
+			else 
+				$this->from = $email;
 		}
 		
 		return $this;
@@ -94,7 +103,8 @@ class Email {
 	 * 
 	 * @param string $subject Subject
 	 */
-	public function set_subject($subject) {
+	public function set_subject($subject) 
+	{
 		$this->subject = trim($subject);
 		
 		return $this;
@@ -109,7 +119,8 @@ class Email {
 	 * @param string $type Content Type
 	 * @param string $charset Character Set
 	 */
-	public function set_body($message, $type = '', $charset = '') {
+	public function set_body($message, $type = '', $charset = '') 
+	{
 		if(!empty($type)) $this->type = $type;
 		if(!empty($charset)) $this->charset = $charset;
 		
@@ -127,14 +138,20 @@ class Email {
 	 * 
 	 * @param string|integer $priority New Priority
 	 */
-	public function set_priority($priority) {
-		if(is_string($priority)) {
+	public function set_priority($priority) 
+	{
+		if(is_string($priority)) 
+		{
 			$priorities = array('low' => 4, 'normal' => 3, 'high' => 2);
-			if(array_key_exists($priority, $priorities)) {
+			if(array_key_exists($priority, $priorities)) 
+			{
 				$this->priority = $priorities[$priority];
 			}
-		} else
+		} 
+		else
+		{
 			$this->priority = $priority;
+		}
 		
 		return $this;
 	}
@@ -148,7 +165,8 @@ class Email {
 	 * @param string $filepath File Location
 	 * @param string $disposition Content Disposition
 	 */
-	public function add_attachment($filepath, $disposition = 'attachment') {
+	public function add_attachment($filepath, $disposition = 'attachment') 
+	{
 		$file_info = $this->file_info($filepath);
 		if(!$file_info) return;
 		
@@ -175,42 +193,48 @@ class Email {
 	 * 
 	 * @return boolean Success/Failure
 	 */
-	public function send() {
-		
+	public function send() 
+	{
 		if(empty($this->recipients)) throw new Exception('No Recipients.');
 		
 		$headers = '';
 		
-		if(!empty($this->from)) {
+		if(!empty($this->from)) 
+		{
 			$headers .= "From: ".$this->from.$this->libr;
 			$headers .= "Reply-To: ".$this->from.$this->libr;
 		}
-		if(!empty($this->cc)) $headers .= "Cc: ".implode(", ", $this->cc).$this->libr;
-		if(!empty($this->bcc)) $headers .= "Bcc: ".implode(", ", $this->bcc).$this->libr;
+
+		if(!empty($this->cc)) $headers .= "Cc: ".implode(", ", $this->cc) . $this->libr;
+		if(!empty($this->bcc)) $headers .= "Bcc: ".implode(", ", $this->bcc) . $this->libr;
 		
-		$headers .= "MIME-Version: 1.0".$this->libr;
-		$headers .= "X-Priority: ".$this->priority.$this->libr;
+		$headers .= "MIME-Version: 1.0" . $this->libr;
+		$headers .= "X-Priority: ".$this->priority . $this->libr;
 		
-		if(!empty($this->attachments)) { // With Attachment
+		if(!empty($this->attachments)) // With Attachment
+		{ 
+			$headers .= 'Content-Type: multipart/mixed; boundary="' . $this->uid . '"' . $this->libr . $this->libr;
 			
-			$headers .= 'Content-Type: multipart/mixed; boundary="'.$this->uid.'"'.$this->libr.$this->libr;
-			
-			$message = '--'.$this->uid.''.$this->libr;
-			$message .= 'Content-Type: multipart/alternative; boundary="mail_'.$this->uid.'"'.$this->libr.$this->libr;
+			$message = '--' . $this->uid . '' . $this->libr;
+			$message .= 'Content-Type: multipart/alternative; boundary="mail_' . $this->uid . '"' . $this->libr . $this->libr;
 			$message .= $this->message;
 			
-			foreach($this->attachments as $attach) {
+			foreach($this->attachments as $attach) 
+			{
 				$message .= $attach;
 			}
 			
-			$message .= '--'.$this->uid.'--';
-			
-		} elseif($this->type == 'text/html') { // Without Attachment
-			
-			$headers .= 'Content-Type: multipart/alternative; boundary="mail_'.$this->uid.'"'.$this->libr.$this->libr;
-			$message = $this->message.$this->libr.$this->libr;
-			
-		} else $message = $this->message.$this->libr.$this->libr;
+			$message .= '--' . $this->uid . '--';
+		} 
+		elseif($this->type == 'text/html') // Without Attachment
+		{ 
+			$headers .= 'Content-Type: multipart/alternative; boundary="mail_' . $this->uid . '"' . $this->libr . $this->libr;
+			$message = $this->message . $this->libr . $this->libr;
+		} 
+		else 
+		{
+			$message = $this->message . $this->libr . $this->libr;
+		}
 		
 		if(empty($this->subject)) $this->subject = '(No Subject)';
 		
@@ -226,9 +250,11 @@ class Email {
 	 * @param string $email Email Address
 	 * @return boolean Pass/Fail
 	 */
-	private function validate_email($email) {
+	private function validate_email($email) 
+	{
 		$pattern = '/^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/';
 		if(preg_match($pattern, $email)) return true;
+		
 		return false;
 	}
 	
@@ -241,12 +267,17 @@ class Email {
 	 * @param string $email Email Address
 	 * @return boolean Pass/Fail
 	 */
-	private function dns_check($email) {
-		if(function_exists("checkdnsrr")) {
+	private function dns_check($email) 
+	{
+		if(function_exists("checkdnsrr")) 
+		{
 			$parts = explode("@", $email);
-			if(checkdnsrr($parts[1], "MX")){
+			if(checkdnsrr($parts[1], "MX"))
+			{
 				return true;
-			} else {
+			} 
+			else 
+			{
 				return false;
 			}
 		}
@@ -260,7 +291,8 @@ class Email {
 	 * @since 1.0.0
 	 * @access private
 	 */
-	private function create_mime_boundry() {
+	private function create_mime_boundry() 
+	{
 		$this->uid = md5(uniqid(time()));
 	}
 	
@@ -273,8 +305,8 @@ class Email {
 	 * @param string $message Unformatted Message
 	 * @return string Formatted Email
 	 */
-	private function mail_body($message) {
-		
+	private function mail_body($message) 
+	{
 		$mail_body = '--mail_'.$this->uid.''.$this->libr;
 		
 		// Ensure plain text email clients can still read the email
@@ -284,7 +316,8 @@ class Email {
 		
 		$mail_body .= '--mail_'.$this->uid.''.$this->libr;
 		
-		if($this->type == 'text/plain') {
+		if($this->type == 'text/plain') 
+		{
 			$mail_body .= $this->libr;
 			return $mail_body;
 		}
@@ -307,11 +340,12 @@ class Email {
 	 * @param string $file File Location
 	 * @return string|boolean File Contents/Fail
 	 */
-	private function file_info($file) {
+	private function file_info($file) 
+	{
 		if(file_exists($file) && $info = file_get_contents($file))
 			return $info;
-		else
-			return false;
+		
+		return false;
 	}
 	
 	/**
@@ -324,14 +358,17 @@ class Email {
 	 * @param string $name Recipient Name
 	 * @param string $type Pool Name
 	 */
-	private function new_email($email, $name, $type = 'recipients') {
-		if($this->validate_email($email) && $this->dns_check($email)) {
+	private function new_email($email, $name, $type = 'recipients') 
+	{
+		if($this->validate_email($email) && $this->dns_check($email)) 
+		{
 			// Format Email
 			if(!empty($name)) $recipient = ucwords($name).' <'.$email.'>';
 			else $recipient = $email;
 			
 			// Add New Email to Pool
-			switch($type) {
+			switch($type) 
+			{
 				case 'cc';
 					if(!in_array($recipient, $this->cc))
 						$this->cc[] = $recipient;
@@ -357,7 +394,8 @@ class Email {
 	 * @param string $file File Location
 	 * @return string MIME Type
 	 */
-	private function mime_type($file) {
+	private function mime_type($file) 
+	{
 		$path_parts = pathinfo($file);
 		
 		$mime_types = array(
@@ -402,7 +440,8 @@ class Email {
 	 * @param string $message Content
 	 * @return string Formatted Content
 	 */
-	private function strip_line_breaks($message) {
+	private function strip_line_breaks($message) 
+	{
 		return preg_replace("/([\r\n])/", "", $message);
 	}
 }
